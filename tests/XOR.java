@@ -13,7 +13,7 @@ public class XOR {
     private final int outputNumber = 1;
 
     public static void main(String[] args) {
-
+        System.out.println(Population.POP_SIZE);
     }
 
 }
