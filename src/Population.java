@@ -25,7 +25,7 @@ public class Population {
     /**
      * <p>Constructor for Population of Genomes</p>
      */
-    public Population( ) {
+    public Population() {
         this.members = new ArrayList<Genome>();
         this.bestFitness = 0.0f;
         this.bestFitnessIndex = 0;
@@ -40,7 +40,6 @@ public class Population {
             this.members.add(new Genome());
         }
     }
-
 
     /**
      * Unit test for Population initializer
@@ -61,6 +60,4 @@ public class Population {
             }
         }
     }
-
-
 }

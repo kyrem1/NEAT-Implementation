@@ -7,6 +7,8 @@
  */
 
 public class ConnectionGene {
+
+
     private int fromNode;
     private int toNode;
     private float weight;
@@ -29,10 +31,29 @@ public class ConnectionGene {
         this.isEnabled = isEnabled;
     }
 
+
+
+
+
     public float getWeight() {
         return weight;
     }
 
+    public int getFromNode() {
+        return fromNode;
+    }
+
+    public int getToNode() {
+        return toNode;
+    }
+
+    public int getInnovationNumber() {
+        return innovationNumber;
+    }
+
+    public void setFromNode(int fromNode) {
+        this.fromNode = fromNode;
+    }
 
     public String toString() {
         return String.format("%d ---> %d   |   weight == %4.2f   |  isEnabled == %b   |   innoNum: %d", this.fromNode, this.toNode, this.weight, this.isEnabled, this.innovationNumber);

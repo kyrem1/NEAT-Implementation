@@ -12,7 +12,4 @@ public interface Environment {
      */
     float fitness(Genome g);
 
-
-
-
 }
