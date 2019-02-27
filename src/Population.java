@@ -31,7 +31,7 @@ public class Population {
     public static final double OFFSPRING_MUTATION_WITHOUT_CROSSOVER_RATE = 0.25;
     public static final double INTERSPECIES_MATING_RATE = 0.001;
     public static final double NEW_LINK_MUTATION_RATE = 0.04; // TODO MAKE SMALL POP AND LARGE POP RATE
-    
+
 
 
     // TODO
