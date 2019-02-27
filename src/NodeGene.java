@@ -10,9 +10,9 @@ import java.util.ArrayList;
 public class NodeGene {
     private int type;                          // Options: "0" In |  "1" Hid |  "2" Out
     private int number;                         // Position in the corresponding Genome's nodes ArrayList
-    private ArrayList<Float> inputs;            // ArrayList of the inputs to this.NodeGene
-    private float input;                          // Used for Input Nodes as alternative to ArrayList
-    private float output;
+    private ArrayList<Double> inputs;            // ArrayList of the inputs to this.NodeGene
+    private double input;                          // Used for Input Nodes as alternative to ArrayList
+    private double output;
     private ArrayList<ConnectionGene> connectionsTo;        // Connections Going to this Node
     private ArrayList<ConnectionGene> connectionsFrom;      // Connection Genes Originating at this Node
 
@@ -22,8 +22,8 @@ public class NodeGene {
      * @param type (String) Layer location within the Genome.
      */
     public NodeGene(int type) {
-        this.inputs = new ArrayList<Float>();
-        this.output = 0;
+        this.inputs = new ArrayList<Double>();
+        this.output = 0.0;
         this.type = type;
         this.connectionsTo = new ArrayList<>();
         this.connectionsFrom = new ArrayList<>();
@@ -33,40 +33,17 @@ public class NodeGene {
     /**
      * Constructor for Bias Node
      * @param type (String) Layer location within the Genome.
-     * @param bias (float) Initializes the Node with constant input.
+     * @param bias (Double) Initializes the Node with constant input.
      */
-    public NodeGene(int type, float bias) {
-        this.inputs = new ArrayList<Float>();
+    public NodeGene(int type, Double bias) {
+        this.inputs = new ArrayList<>();
         this.inputs.add(bias);
-        this.output = 0;
+        this.output = 0.0;
         this.type = type;
         this.connectionsTo = new ArrayList<>();
         this.connectionsFrom = new ArrayList<>();
     }
 
-    public int getType() {
-        return type;
-    }
-
-    public ArrayList<Float> getInputs() {
-        return inputs;
-    }
-
-    public float getInput() {
-        return input;
-    }
-
-    public void setInputs(ArrayList<Float> inputs) {
-        this.inputs = inputs;
-    }
-
-    public void setInput(float input) {
-        this.input = input;
-    }
-
-    public void setNumber(int number) {
-        this.number = number;
-    }
 
     public void findConnections(ST<Integer, ConnectionGene> connections) {
         for(Integer key : connections) {
@@ -112,7 +89,7 @@ public class NodeGene {
         if(this.type == 0) {
             System.out.println(this.input);
         } else {
-            Util.printArr(inputs);
+            Util.printArrD(this.inputs);
         }
 
         // Connection Info
@@ -125,7 +102,75 @@ public class NodeGene {
         for (ConnectionGene cg : this.connectionsTo) {
             System.out.printf("\t%d -- > %d  W: %f\n", cg.getFromNode(), cg.getToNode(), cg.getWeight());
         }
+
+        //Output Info
+        System.out.print("Output: ");
+        System.out.println(this.output);
+
     }
+
+    public void addInput(Double f) {
+        this.inputs.add(f);
+    }
+
+    /**
+     *   <p>Takes ArrayList of all the weighted inputs, and sets output as sigmoid of that</p>
+     */
+    public void activation() {
+        double total = 0.0;
+        for(Double f : this.inputs) {
+            total += f;
+        }
+        this.output = Util.sigmoid(total);
+        this.printNodeInfo();
+    }
+
+
+
+    // ***********************************************************************************
+    // GETTER AND SETTERS
+    public int getType() {
+        return type;
+    }
+    public void setType(int type) {
+        this.type = type;
+    }
+
+    public void setInputs(ArrayList<Double> inputs) {
+        this.inputs = inputs;
+    }
+    public ArrayList<Double> getInputs() {
+        return inputs;
+    }
+
+    public double getInput() {
+        return input;
+    }
+    public void setInput(Double input) {
+        this.input = input;
+    }
+
+    public void setNumber(int number) {
+        this.number = number;
+    }
+    public int getNumber() {
+        return number;
+    }
+
+    public void setOutput(Double output) {
+        this.output = output;
+    }
+    public double getOutput() {
+        return output;
+    }
+
+    public ArrayList<ConnectionGene> getConnectionsTo() {
+        return connectionsTo;
+    }
+    public ArrayList<ConnectionGene> getConnectionsFrom() {
+        return connectionsFrom;
+    }
+
 
 
     // TODO Make SENSIBLE toString method

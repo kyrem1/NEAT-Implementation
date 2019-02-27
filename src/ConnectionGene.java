@@ -11,7 +11,7 @@ public class ConnectionGene {
 
     private int fromNode;
     private int toNode;
-    private float weight;
+    private double weight;
     private boolean isEnabled;
     private int innovationNumber;
 
@@ -23,7 +23,7 @@ public class ConnectionGene {
      * @param innovationNumber  Innovation Number of the connection
      * @param isEnabled  Specifies if connection is initially enabled
      */
-    public ConnectionGene(int fromNode, int toNode, float weight, int innovationNumber, boolean isEnabled) {
+    public ConnectionGene(int fromNode, int toNode, double weight, int innovationNumber, boolean isEnabled) {
         this.fromNode = fromNode;
         this.toNode = toNode;
         this.weight = weight;
@@ -33,9 +33,8 @@ public class ConnectionGene {
 
 
 
-
-
-    public float getWeight() {
+    //******************************************************************************************************
+    public double getWeight() {
         return weight;
     }
 
@@ -53,6 +52,10 @@ public class ConnectionGene {
 
     public void setFromNode(int fromNode) {
         this.fromNode = fromNode;
+    }
+
+    public void setToNode(int toNode) {
+        this.toNode = toNode;
     }
 
     public String toString() {

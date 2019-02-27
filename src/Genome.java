@@ -1,4 +1,3 @@
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -22,7 +21,6 @@ public class Genome {
     /**
      * Constructor function for a new Genome.
      */
-
     public Genome() {
         Random rng = new Random();
         this.connections = new ST<Integer, ConnectionGene>();
@@ -31,43 +29,74 @@ public class Genome {
 
         this.nodes.put(1, new NodeGene(0));
         this.nodes.put(2, new NodeGene(0));
-        this.nodes.put(3, new NodeGene(0,1.0f));
+        this.nodes.put(3, new NodeGene(0,1.0));
         this.nodes.put(4, new NodeGene(1));
+        this.nodes.put(5, new NodeGene(2));
 
-        this.connections.put(1, new ConnectionGene(1,4, rng.nextFloat(), 1, true));
-        this.connections.put(2, new ConnectionGene(2, 4, rng.nextFloat(), 2, true));
-        this.connections.put(3, new ConnectionGene(3, 4, rng.nextFloat(), 3, true));
+        this.connections.put(1, new ConnectionGene(1,5, rng.nextDouble(), 1, true));
+        this.connections.put(2, new ConnectionGene(2, 4, rng.nextDouble(), 2, true));
+        this.connections.put(3, new ConnectionGene(4, 5, rng.nextDouble(), 3, true));
+        this.connections.put(4, new ConnectionGene(3, 5, rng.nextDouble(), 4, true));
 
         this.input_nodes = new ArrayList<>();
         this.hidden_nodes = new ArrayList<>();
         this.output_nodes = new ArrayList<>();
-
     }
 
+    /**
+     * <p>Prints entire Connections array</p>
+     */
     public void printConnections() {
         for(int key : this.connections.keys()) {
             System.out.println(this.connections.get(key).toString());
         }
     }
 
-    public float evaluate(ArrayList<Float> inputs) {
+    //TODO CHANGE RETURN TYPE TO Double AND HANDLE ACCORDINGLY
+    public void evaluate(ArrayList<Double> inputs) {
         // TODO Implement evaluation algorithm
-        //  -   Can Initially specialized for XOR
-        //  -   Afterwards, Generalize the Algorithm
         NodeGene tempnode;
+        //Initialize Connection List in each NodeGene
+        for(Integer key : this.nodes.keys()) {
+            this.nodes.get(key).findConnections(this.connections);
+        }
+        //Initialize the Input nodes with args
         for(Integer key : this.input_nodes) {
             tempnode = this.nodes.get(key);
-            for(Float in : inputs) {
-                tempnode.setInput(in);
+            for(Double in : inputs) {
+                tempnode.setOutput(in);
+            }
+            tempnode.printNodeInfo();
+        }
+
+
+        //TODO MAKE WAY TO SKIP TO OUTPUT LAYER IF THERE IS NO HIDDEN LAYER
+        //Feed forward
+        for(Integer key : this.input_nodes) {
+            for(ConnectionGene cg : this.nodes.get(key).getConnectionsTo()) {
+                //Appends Weight * Previous Output to the Input list of the next Node.
+                double wval = cg.getWeight() * this.nodes.get(key).getOutput();
+                System.out.println(wval);
+                this.nodes.get(cg.getToNode()).addInput(wval);
+            }
+            this.nodes.get(key).printNodeInfo();
+        }
+
+        //TODO ADD ERROR HANDLING FOR EMPTY HIDDEN LAYER AGAIN
+        for(Integer key : this.hidden_nodes) {
+            this.nodes.get(key).activation();
+            for(ConnectionGene cg : this.nodes.get(key).getConnectionsFrom()) {
+                //Appends Weight * Previous Output to the Input list of the next Node.
+                double wval = cg.getWeight() * this.nodes.get(key).getOutput();
+                System.out.println(wval);
+                this.nodes.get(cg.getToNode()).addInput(wval);
             }
         }
-
-        for(Integer key : this.input_nodes) {
-
+        for(Integer key : this.output_nodes) {
+            this.nodes.get(key).activation();
+            this.nodes.get(key).printNodeInfo();
+            System.out.println(this.nodes.get(key).getOutput());
         }
-
-
-        return 1.0f;    // Temporary
     }
 
     public void updateKeyLists() {
@@ -90,37 +119,27 @@ public class Genome {
 
     }
 
+    public ST<Integer, NodeGene> getNodes() {
+        return nodes;
+    }
 
+    public ST<Integer, ConnectionGene> getConnections() {
+        return connections;
+    }
 
     // TODO Implement Mutation Methods
 
 
-    /**
-     * Unit Test for Genome Connection Genes
-     * @param args
-     */
-    public static void main(String[] args) {
-        Genome g = new Genome();
-        g.updateKeyLists();
-        NodeGene tempnode;
-        for(Integer key : g.nodes) {
-            tempnode = g.nodes.get(key);
-            tempnode.findConnections(g.connections);
-        }
-        for(Integer key : g.nodes) {
-            tempnode = g.nodes.get(key);
-            tempnode.printConnections();
-        }
-//        g.printConnections();
+
+    //******************************************************************************************
+    //GETTER AND SETTER
+    public ArrayList<Integer> getInput_nodes() {
+        return input_nodes;
     }
-
-
-
-
-
-
-
-
-
-
+    public ArrayList<Integer> getHidden_nodes() {
+        return hidden_nodes;
+    }
+    public ArrayList<Integer> getOutput_nodes() {
+        return output_nodes;
+    }
 }
