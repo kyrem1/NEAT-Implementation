@@ -22,11 +22,10 @@ class GenomeTest {
 
     public static void main(String[] args) {
         Genome g = new Genome();
-        ArrayList<Double> ins = new ArrayList<>();
+        ArrayList<Double> ins = new ArrayList<Double>();
         ins.add(1.0);
-        ins.add(1.0);
+        ins.add(0.0);
 
-        g.updateKeyLists();
         Util.printArrI(g.getInput_nodes());
         System.out.println();
         Util.printArrI(g.getHidden_nodes());

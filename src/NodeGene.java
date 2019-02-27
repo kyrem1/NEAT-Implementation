@@ -27,7 +27,6 @@ public class NodeGene {
         this.type = type;
         this.connectionsTo = new ArrayList<>();
         this.connectionsFrom = new ArrayList<>();
-
     }
 
     /**
@@ -38,13 +37,13 @@ public class NodeGene {
     public NodeGene(int type, Double bias) {
         this.inputs = new ArrayList<>();
         this.inputs.add(bias);
-        this.output = 0.0;
+        this.output = bias;
         this.type = type;
         this.connectionsTo = new ArrayList<>();
         this.connectionsFrom = new ArrayList<>();
     }
 
-
+    // Required for Activation
     public void findConnections(ST<Integer, ConnectionGene> connections) {
         for(Integer key : connections) {
             ConnectionGene tempcon;
@@ -59,6 +58,25 @@ public class NodeGene {
             }
         }
     }
+
+    public void addInput(double f) {
+        this.inputs.add(f);
+    }
+
+    /**
+     *   <p>Takes ArrayList of all the weighted inputs, and sets output as sigmoid of that</p>
+     */
+    public void activation() {
+        double total = 0.0;
+        for(Double f : this.inputs) {
+            total += f;
+        }
+        this.output = Util.sigmoid(total);
+        this.printNodeInfo();     // Debug
+    }
+
+    // ***********************************************************************************
+    // Information Printing
 
     /**
      * prints Corresponding connections for testing this gene.
@@ -86,11 +104,7 @@ public class NodeGene {
 
         // Input Info
         System.out.print("Input(s): ");
-        if(this.type == 0) {
-            System.out.println(this.input);
-        } else {
-            Util.printArrD(this.inputs);
-        }
+        Util.printArrD(this.inputs);
 
         // Connection Info
         System.out.println("\t----FROM----");
@@ -106,26 +120,8 @@ public class NodeGene {
         //Output Info
         System.out.print("Output: ");
         System.out.println(this.output);
-
+        System.out.println("\n**********\n");
     }
-
-    public void addInput(Double f) {
-        this.inputs.add(f);
-    }
-
-    /**
-     *   <p>Takes ArrayList of all the weighted inputs, and sets output as sigmoid of that</p>
-     */
-    public void activation() {
-        double total = 0.0;
-        for(Double f : this.inputs) {
-            total += f;
-        }
-        this.output = Util.sigmoid(total);
-        this.printNodeInfo();
-    }
-
-
 
     // ***********************************************************************************
     // GETTER AND SETTERS

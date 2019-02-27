@@ -6,42 +6,60 @@ import java.util.Random;
  * neural network via a Symbol Table of nodes and a Symbol Table of connections.
  *
  * @author kyrem1
- * @version 1
+ * @version 4
  * @since 02-20-2019
  */
 public class Genome {
 
-    private ST<Integer, ConnectionGene> connections;
-    private ST<Integer, NodeGene> nodes;
+    private ST<Integer, ConnectionGene> connections=  new ST<>();
+    private ST<Integer, NodeGene> nodes = new ST<>();
     private ArrayList<Integer> input_nodes;
     private ArrayList<Integer> hidden_nodes;
     private ArrayList<Integer> output_nodes;
-    private int globalInnovationNumber;
+    private int globalInnovationNumber = 1;             // TODO Make global Innovation number increment automatically
+    private int globalConnectionKey = 1;
+    private int globalNodeKey = 1;
 
     /**
      * Constructor function for a new Genome.
      */
     public Genome() {
         Random rng = new Random();
-        this.connections = new ST<Integer, ConnectionGene>();
-        this.nodes = new ST<Integer, NodeGene>();
-        this.globalInnovationNumber = 3;                    // TODO Make global Innovation number increment automatically
 
-        this.nodes.put(1, new NodeGene(0));
-        this.nodes.put(2, new NodeGene(0));
-        this.nodes.put(3, new NodeGene(0,1.0));
-        this.nodes.put(4, new NodeGene(1));
-        this.nodes.put(5, new NodeGene(2));
+        // TODO Streamline initial topology and connections
+        addNode(0);
+        addNode(0);
+        addNode(0, 1.0);
+        addNode(1);
+        addNode(2);
 
-        this.connections.put(1, new ConnectionGene(1,5, rng.nextDouble(), 1, true));
-        this.connections.put(2, new ConnectionGene(2, 4, rng.nextDouble(), 2, true));
-        this.connections.put(3, new ConnectionGene(4, 5, rng.nextDouble(), 3, true));
-        this.connections.put(4, new ConnectionGene(3, 5, rng.nextDouble(), 4, true));
+        addConnection(1,5, rng.nextDouble(), true);
+        addConnection(2, 4, rng.nextDouble(), true);
+        addConnection(4, 5, rng.nextDouble(), true);
+        addConnection(3,5, rng.nextDouble(), true);
 
         this.input_nodes = new ArrayList<>();
         this.hidden_nodes = new ArrayList<>();
         this.output_nodes = new ArrayList<>();
     }
+
+    public void addConnection(int from, int to, double weight, boolean isEnabled) {
+        this.connections.put(this.globalConnectionKey, new ConnectionGene(from, to, weight, this.globalInnovationNumber, isEnabled));
+        this.globalInnovationNumber++;
+        this.globalConnectionKey++;
+    }
+
+    public void addNode(int type) {
+        this.nodes.put(this.globalNodeKey, new NodeGene(type));
+        this.globalNodeKey++;
+    }
+
+    public void addNode(int type, double bias) {
+        this.nodes.put(this.globalNodeKey, new NodeGene(type, bias));
+        this.globalNodeKey++;
+    }
+
+    //*****************************************************************************************************************
 
     /**
      * <p>Prints entire Connections array</p>
@@ -52,49 +70,58 @@ public class Genome {
         }
     }
 
-    //TODO CHANGE RETURN TYPE TO Double AND HANDLE ACCORDINGLY
+    public void printWeights() {
+        for(Integer key: this.connections) {
+            System.out.println(this.connections.get(key));
+        }
+    }
+
+    // TODO CHANGE RETURN TYPE TO Double AND HANDLE ACCORDINGLY
+
+    /**
+     * <p>Evaluates output(s) given an ArrayList of inputs</p>
+     * @param inputs List of inputs to evaluate network with
+     */
     public void evaluate(ArrayList<Double> inputs) {
-        // TODO Implement evaluation algorithm
-        NodeGene tempnode;
+        this.updateKeyLists();
         //Initialize Connection List in each NodeGene
         for(Integer key : this.nodes.keys()) {
             this.nodes.get(key).findConnections(this.connections);
         }
-        //Initialize the Input nodes with args
-        for(Integer key : this.input_nodes) {
-            tempnode = this.nodes.get(key);
-            for(Double in : inputs) {
-                tempnode.setOutput(in);
-            }
-            tempnode.printNodeInfo();
-        }
 
+        // Initialize Input Nodes with given inputs.
+        for(int i = 0; i < inputs.size(); i++) {
+            double temp = inputs.get(i);
+            this.nodes.get(i+1).addInput(temp);
+            this.nodes.get(i+1).setOutput(temp);
+            this.nodes.get(i+1).printNodeInfo();
+        }
 
         //TODO MAKE WAY TO SKIP TO OUTPUT LAYER IF THERE IS NO HIDDEN LAYER
-        //Feed forward
+        //Feed forward |  INPUT --> HIDDEN
         for(Integer key : this.input_nodes) {
-            for(ConnectionGene cg : this.nodes.get(key).getConnectionsTo()) {
+            for(ConnectionGene cg : this.nodes.get(key).getConnectionsFrom()) {
                 //Appends Weight * Previous Output to the Input list of the next Node.
                 double wval = cg.getWeight() * this.nodes.get(key).getOutput();
-                System.out.println(wval);
                 this.nodes.get(cg.getToNode()).addInput(wval);
             }
-            this.nodes.get(key).printNodeInfo();
         }
 
-        //TODO ADD ERROR HANDLING FOR EMPTY HIDDEN LAYER AGAIN
+        //FIXME Might Throw an err or with empty hidden layer.
+        //Hidden Activations
         for(Integer key : this.hidden_nodes) {
             this.nodes.get(key).activation();
             for(ConnectionGene cg : this.nodes.get(key).getConnectionsFrom()) {
                 //Appends Weight * Previous Output to the Input list of the next Node.
                 double wval = cg.getWeight() * this.nodes.get(key).getOutput();
-                System.out.println(wval);
+                this.nodes.get(key).setOutput(wval);
                 this.nodes.get(cg.getToNode()).addInput(wval);
             }
         }
+
+        // Output Activation
         for(Integer key : this.output_nodes) {
             this.nodes.get(key).activation();
-            this.nodes.get(key).printNodeInfo();
             System.out.println(this.nodes.get(key).getOutput());
         }
     }
@@ -129,6 +156,14 @@ public class Genome {
 
     // TODO Implement Mutation Methods
 
+    public void mutateAddConnection() {
+
+    }
+
+    public void mutateAddNode() {
+
+    }
+
 
 
     //******************************************************************************************
@@ -136,9 +171,11 @@ public class Genome {
     public ArrayList<Integer> getInput_nodes() {
         return input_nodes;
     }
+
     public ArrayList<Integer> getHidden_nodes() {
         return hidden_nodes;
     }
+
     public ArrayList<Integer> getOutput_nodes() {
         return output_nodes;
     }
