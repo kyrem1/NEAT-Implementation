@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
+import java.util.Comparator;
 
 /**
  * A Genome defines the topological map of a
@@ -11,172 +13,254 @@ import java.util.Random;
  */
 public class Genome {
 
-    private ST<Integer, ConnectionGene> connections=  new ST<>();
-    private ST<Integer, NodeGene> nodes = new ST<>();
-    private ArrayList<Integer> input_nodes;
-    private ArrayList<Integer> hidden_nodes;
-    private ArrayList<Integer> output_nodes;
-    private int globalInnovationNumber = 1;             // TODO Make global Innovation number increment automatically
-    private int globalConnectionKey = 1;
-    private int globalNodeKey = 1;
+    private ArrayList<ConnectionGene> connections = new ArrayList<>();  // List of all connections
+    private ArrayList<NodeGene> nodes = new ArrayList<>();  // List of nodes
+    private ArrayList<NodeGene> network = new ArrayList<>();    // List of nodes st. in activation order
+    private int numInputs;  // Number of outputs
+    private int numOutputs; // Number of inputs
+    private int layers = 2; // Current total number of layers, begins at 1
+    public static int nextInnovationNumber = 1; // Next inoovation number to be assigned. Also encodes innately max innovation number.
+    private int nextNode = 0;   // Next number to be assigned to a node
+    private int biasNode; // Number assigned to the bias node
 
     /**
      * Constructor function for a new Genome.
      */
-    public Genome() {
-        Random rng = new Random();
+    public Genome(int numInputs, int numOutputs) {
+        this.numInputs = numInputs;
+        this.numOutputs = numOutputs;
 
-        // TODO Streamline initial topology and connections
-        addNode(0);
-        addNode(0);
-        addNode(0, 1.0);
-        addNode(1);
-        addNode(2);
+        // Add in input nodes
+        for (int i = 0; i < this.numInputs; i++) {
+            this.nodes.add(new NodeGene(i));
+            this.nextNode++;
+            this.nodes.get(i).setLayer(0);
+        }
 
-        addConnection(1,5, rng.nextDouble(), true);
-        addConnection(2, 4, rng.nextDouble(), true);
-        addConnection(4, 5, rng.nextDouble(), true);
-        addConnection(3,5, rng.nextDouble(), true);
+        // Add in output nodes
+        for (int i = 0; i < this.numOutputs; i++) {
+            this.nodes.add(new NodeGene(i + this.numInputs));
+            this.nodes.get(i + this.numInputs).setLayer(1);
+            this.nextNode++;
+        }
 
-        this.input_nodes = new ArrayList<>();
-        this.hidden_nodes = new ArrayList<>();
-        this.output_nodes = new ArrayList<>();
+        this.nodes.add(new NodeGene(this.nextNode)); //bias node
+        this.biasNode = this.nextNode;
+        this.nextNode++;
+        this.nodes.get(this.biasNode).setLayer(0);
     }
 
+    //****************************************************************************************************************************************
+    // Genome-Specific Utility Methods
     public void addConnection(int from, int to, double weight, boolean isEnabled) {
-        this.connections.put(this.globalConnectionKey, new ConnectionGene(from, to, weight, this.globalInnovationNumber, isEnabled));
-        this.globalInnovationNumber++;
-        this.globalConnectionKey++;
+        this.connections.add(new ConnectionGene(from, to, weight, Genome.nextInnovationNumber, isEnabled));
+        Genome.nextInnovationNumber++;
     }
 
-    public void addNode(int type) {
-        this.nodes.put(this.globalNodeKey, new NodeGene(type));
-        this.globalNodeKey++;
-    }
-
-    public void addNode(int type, double bias) {
-        this.nodes.put(this.globalNodeKey, new NodeGene(type, bias));
-        this.globalNodeKey++;
+    public void addNode(int layer) {
+        this.nodes.add(new NodeGene(this.nextNode, layer));
+        this.nextNode++;
+        updateNetwork();
     }
 
     //*****************************************************************************************************************
+    // GENOME INFO
 
     /**
      * <p>Prints entire Connections array</p>
      */
     public void printConnections() {
-        for(int key : this.connections.keys()) {
-            System.out.println(this.connections.get(key).toString());
+        for (ConnectionGene cg : connections) {
+            System.out.println(cg.toString());
         }
     }
 
-    public void printWeights() {
-        for(Integer key: this.connections) {
-            System.out.println(this.connections.get(key));
+    // FIXME Make topology display better
+    public void printTopology() {
+        this.printConnections();
+        for(NodeGene node : this.network) {
+            node.printNodeInfo();
         }
     }
-
-    // TODO CHANGE RETURN TYPE TO Double AND HANDLE ACCORDINGLY
 
     /**
-     * <p>Evaluates output(s) given an ArrayList of inputs</p>
-     * @param inputs List of inputs to evaluate network with
+     * <p>Ordered Network Info</p>
      */
-    public void evaluate(ArrayList<Double> inputs) {
-        this.updateKeyLists();
-        //Initialize Connection List in each NodeGene
-        for(Integer key : this.nodes.keys()) {
-            this.nodes.get(key).findConnections(this.connections);
+    public void printNetwork() {
+        for(NodeGene node : this.network) {
+            System.out.println(node);
         }
+    }
 
-        // Initialize Input Nodes with given inputs.
-        for(int i = 0; i < inputs.size(); i++) {
-            double temp = inputs.get(i);
-            this.nodes.get(i+1).addInput(temp);
-            this.nodes.get(i+1).setOutput(temp);
-            this.nodes.get(i+1).printNodeInfo();
-        }
+    //*****************************************************************************************************************
+    // GENOME MAIN METHODS
 
-        //TODO MAKE WAY TO SKIP TO OUTPUT LAYER IF THERE IS NO HIDDEN LAYER
-        //Feed forward |  INPUT --> HIDDEN
-        for(Integer key : this.input_nodes) {
-            for(ConnectionGene cg : this.nodes.get(key).getConnectionsFrom()) {
-                //Appends Weight * Previous Output to the Input list of the next Node.
-                double wval = cg.getWeight() * this.nodes.get(key).getOutput();
-                this.nodes.get(cg.getToNode()).addInput(wval);
+    /**
+     * <p>Call upon creation of genome</p>
+     */
+    public void setupNetwork() {
+        Random rng = new Random();
+
+        for(NodeGene node : this.nodes) {
+
+            if(node.getLayer() < this.layers - 1) { // Make sure node isn't in last layer
+
+                for(NodeGene node_next_layer : this.nodes) {
+
+                    if(node_next_layer.getLayer() == node.getLayer() + 1) { // Connect to every node in next layer
+                        this.addConnection(node.getNumber(), node_next_layer.getNumber(), rng.nextDouble(), true);
+                    }
+
+                }
+
             }
         }
 
-        //FIXME Might Throw an err or with empty hidden layer.
-        //Hidden Activations
-        for(Integer key : this.hidden_nodes) {
-            this.nodes.get(key).activation();
-            for(ConnectionGene cg : this.nodes.get(key).getConnectionsFrom()) {
-                //Appends Weight * Previous Output to the Input list of the next Node.
-                double wval = cg.getWeight() * this.nodes.get(key).getOutput();
-                this.nodes.get(key).setOutput(wval);
-                this.nodes.get(cg.getToNode()).addInput(wval);
+        this.updateNetwork();
+    }
+
+    /**
+     * <p>Call upon any updating of genomic information.</p>
+     */
+    public void updateNetwork() {
+        this.network.clear();
+        this.network.addAll(this.nodes);
+
+        Collections.sort(this.network, new Comparator<NodeGene>() {
+            @Override
+            public int compare(NodeGene nodeGene1, NodeGene nodeGene2) {
+                return Integer.compare(nodeGene1.getLayer(), nodeGene2.getLayer());
             }
-        }
+        });
 
-        // Output Activation
-        for(Integer key : this.output_nodes) {
-            this.nodes.get(key).activation();
-            System.out.println(this.nodes.get(key).getOutput());
+        for(ConnectionGene cg : this.connections) {
+            cg.findNodes(this.nodes);
+        }
+        for(NodeGene node : this.nodes) {
+            node.findConnections(this.connections);
         }
     }
 
-    public void updateKeyLists() {
-        for(Integer key : nodes) {
-            nodes.get(key).setNumber(key);
+    /**
+     * Evaluates the network given an array of inputs
+     *
+     * @param inputValues an array of double input value(s)
+     * @return an array of the output(s) of the network
+     */
+    public double[] feedForward(double[] inputValues) {
+        //set the outputs of the input nodes
+        for (int i = 0; i < this.numInputs; i++) {
+            nodes.get(i).setOutputValue(inputValues[i]);
+        }
+        nodes.get(biasNode).setOutputValue(1); //output of bias is 1
+
+        for (int i = 0; i < network.size(); i++) {   //for each node in the network engage it(see node class for what this does)
+            network.get(i).engage();
         }
 
-        NodeGene tempNode;
-        for(Integer key : this.nodes.keys()) {
-            tempNode = this.nodes.get(key);
-            if(tempNode.getType() == 0) {
-                this.input_nodes.add(key);
-            } else if(tempNode.getType() == 1) {
-                this.hidden_nodes.add(key);
-            } else {
-                this.output_nodes.add(key);
-            }
+        //the outputs are nodes[this.numInputs] to nodes [this.numInputs + this.numOutputs-1]
+        double[] outs = new double[this.numOutputs];
+        for (int i = 0; i < this.numOutputs; i++) {
+            outs[i] = nodes.get(this.numInputs + i).getOutputValue();
         }
 
+        for (NodeGene node : this.nodes) { //reset all the nodes for the next feed forward
+            node.setInputSum(0);
+        }
 
+        return outs;
     }
 
-    public ST<Integer, NodeGene> getNodes() {
-        return nodes;
-    }
-
-    public ST<Integer, ConnectionGene> getConnections() {
-        return connections;
-    }
-
+    //****************************************************************************************************************************************
+    // GENOME MUTATION METHODS
     // TODO Implement Mutation Methods
 
+    // I think it works....
+    public void mutateAddNode() {
+        Random rng = new Random();
+        if(Util.weightedDecision(Population.MUTATION_RATE)) {
+            int rConnectionNum = rng.nextInt(this.connections.size());
+            int endlayer = this.connections.get(rConnectionNum).getToNode().getLayer();
+
+            this.connections.addAll(this.connections.get(rConnectionNum).split(nextNode)); // Split Connection
+
+            this.addNode(this.connections.get(rConnectionNum).getToNode().getLayer());
+            this.connections.get(rConnectionNum).getToNode().setLayer(endlayer + 1);
+            this.updateNetwork();
+        }
+    }
+
+    // TODO ImplementMe
     public void mutateAddConnection() {
 
     }
 
-    public void mutateAddNode() {
-
-    }
-
-
 
     //******************************************************************************************
     //GETTER AND SETTER
-    public ArrayList<Integer> getInput_nodes() {
-        return input_nodes;
+
+    public ArrayList<ConnectionGene> getConnections() {
+        return connections;
     }
 
-    public ArrayList<Integer> getHidden_nodes() {
-        return hidden_nodes;
+    public void setConnections(ArrayList<ConnectionGene> connections) {
+        this.connections = connections;
     }
 
-    public ArrayList<Integer> getOutput_nodes() {
-        return output_nodes;
+    public ArrayList<NodeGene> getNodes() {
+        return nodes;
     }
+
+    public void setNodes(ArrayList<NodeGene> nodes) {
+        this.nodes = nodes;
+    }
+
+    public ArrayList<NodeGene> getNetwork() {
+        return network;
+    }
+
+    public void setNetwork(ArrayList<NodeGene> network) {
+        this.network = network;
+    }
+
+    public int getNumInputs() {
+        return numInputs;
+    }
+
+    public void setNumInputs(int numInputs) {
+        this.numInputs = numInputs;
+    }
+
+    public int getNumOutputs() {
+        return numOutputs;
+    }
+
+    public void setNumOutputs(int numOutputs) {
+        this.numOutputs = numOutputs;
+    }
+
+    public int getLayers() {
+        return layers;
+    }
+
+    public void setLayers(int layers) {
+        this.layers = layers;
+    }
+
+    public int getNextNode() {
+        return nextNode;
+    }
+
+    public void setNextNode(int nextNode) {
+        this.nextNode = nextNode;
+    }
+
+    public int getBiasNode() {
+        return biasNode;
+    }
+
+    public void setBiasNode(int biasNode) {
+        this.biasNode = biasNode;
+    }
+
 }

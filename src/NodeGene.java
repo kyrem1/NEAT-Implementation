@@ -8,71 +8,77 @@ import java.util.ArrayList;
  */
 
 public class NodeGene {
-    private int type;                          // Options: "0" In |  "1" Hid |  "2" Out
     private int number;                         // Position in the corresponding Genome's nodes ArrayList
-    private ArrayList<Double> inputs;            // ArrayList of the inputs to this.NodeGene
-    private double input;                          // Used for Input Nodes as alternative to ArrayList
-    private double output;
-    private ArrayList<ConnectionGene> connectionsTo;        // Connections Going to this Node
-    private ArrayList<ConnectionGene> connectionsFrom;      // Connection Genes Originating at this Node
+    private double inputSum;                          // Used for Input Nodes as alternative to ArrayList
+    private double outputValue;
+    private int layer;
+    private ArrayList<ConnectionGene> outputConnections;        // Connections Beginning from this Node
+    private ArrayList<ConnectionGene> inputConnections;      // Connection Genes Ending at this Node
 
+    // TODO Implement automatic layer limiting
 
     /**
-     * Constructor for Regular Node
-     * @param type (String) Layer location within the Genome.
+     * <p>Node Constructor</p>
+     * @param number Node Number Label
      */
-    public NodeGene(int type) {
-        this.inputs = new ArrayList<Double>();
-        this.output = 0.0;
-        this.type = type;
-        this.connectionsTo = new ArrayList<>();
-        this.connectionsFrom = new ArrayList<>();
+    public NodeGene(int number) {
+        this.number = number;
+        this.inputSum = 0.0;
+        this.outputValue = 0.0;
+        this.layer = 0;
+        this.outputConnections = new ArrayList<>();
+        this.inputConnections = new ArrayList<>();
     }
 
     /**
-     * Constructor for Bias Node
-     * @param type (String) Layer location within the Genome.
-     * @param bias (Double) Initializes the Node with constant input.
+     * Node constructor with specified layer
+     * @param number Number of Node
+     * @param layer Layer Param
      */
-    public NodeGene(int type, Double bias) {
-        this.inputs = new ArrayList<>();
-        this.inputs.add(bias);
-        this.output = bias;
-        this.type = type;
-        this.connectionsTo = new ArrayList<>();
-        this.connectionsFrom = new ArrayList<>();
+    public NodeGene(int number, int layer) {
+        this.number = number;
+        this.inputSum = 0.0;
+        this.outputValue = 0.0;
+        this.layer = layer;
+        this.outputConnections = new ArrayList<>();
+        this.inputConnections = new ArrayList<>();
     }
 
-    // Required for Activation
-    public void findConnections(ST<Integer, ConnectionGene> connections) {
-        for(Integer key : connections) {
-            ConnectionGene tempcon;
-            tempcon = connections.get(key);
-
-            if(tempcon.getFromNode() == this.number) {
-                this.connectionsFrom.add(tempcon);
+    // Initializes the input and output connection lists.
+    public void findConnections(ArrayList<ConnectionGene> connections) {
+        this.outputConnections.clear();
+        this.inputConnections.clear();
+        for(ConnectionGene tempcon : connections) {
+            if(tempcon.getToNodeNum() == this.number) {
+                this.inputConnections.add(tempcon);
             }
 
-            if(tempcon.getToNode() == this.number) {
-                this.connectionsTo.add(tempcon);
+            if(tempcon.getFromNodeNum() == this.number) {
+                this.outputConnections.add(tempcon);
             }
         }
     }
 
-    public void addInput(double f) {
-        this.inputs.add(f);
+    public void addInput(double input) {
+        this.inputSum += input;
     }
 
     /**
-     *   <p>Takes ArrayList of all the weighted inputs, and sets output as sigmoid of that</p>
+     *   <p>Engages the node and feeds forward</p>
      */
-    public void activation() {
-        double total = 0.0;
-        for(Double f : this.inputs) {
-            total += f;
+    public void engage() {
+        if (this.layer != 0) {  //Makes sure isn't input node, then gives activation function
+            this.outputValue = Util.sigtransfer(this.inputSum);
         }
-        this.output = Util.sigmoid(total);
-        this.printNodeInfo();     // Debug
+
+        for(ConnectionGene cg : this.outputConnections) { // Add new ouput to each of the connected output node's inputSum
+            if(cg.isEnabled()) {    // Make sure connection is enabled first
+                double feed = cg.getWeight() * this.outputValue;
+                cg.getToNode().addInput(feed);
+            }
+
+        }
+
     }
 
     // ***********************************************************************************
@@ -85,13 +91,13 @@ public class NodeGene {
         System.out.print("Node no: " + this.number + "\n");
 
         System.out.println("\t----FROM----");
-        for (ConnectionGene cg : this.connectionsFrom) {
-            System.out.printf("\t%d -- > %d\n", cg.getFromNode(), cg.getToNode());
+        for (ConnectionGene cg : this.inputConnections) {
+            System.out.printf("\t%d -- > %d\n", cg.getFromNodeNum(), cg.getToNodeNum());
         }
 
         System.out.println("\n\t----TO----");
-        for (ConnectionGene cg : this.connectionsTo) {
-            System.out.printf("\t%d -- > %d\n", cg.getFromNode(), cg.getToNode());
+        for (ConnectionGene cg : this.outputConnections) {
+            System.out.printf("\t%d -- > %d\n", cg.getFromNodeNum(), cg.getToNodeNum());
         }
     }
 
@@ -103,71 +109,86 @@ public class NodeGene {
         System.out.print("Node no: " + this.number + "\n");
 
         // Input Info
-        System.out.print("Input(s): ");
-        Util.printArrD(this.inputs);
+        System.out.print("Input Sum: ");
+        System.out.println(this.inputSum);
 
         // Connection Info
-        System.out.println("\t----FROM----");
-        for (ConnectionGene cg : this.connectionsFrom) {
-            System.out.printf("\t%d -- > %d  W: %f\n", cg.getFromNode(), cg.getToNode(), cg.getWeight());
+        System.out.println("\t----Into me----");
+        for (ConnectionGene cg : this.inputConnections) {
+            System.out.printf("\t%d -- > %d  W: %f\n", cg.getFromNodeNum(), cg.getToNodeNum(), cg.getWeight());
         }
-
-        System.out.println("\n\t----TO----");
-        for (ConnectionGene cg : this.connectionsTo) {
-            System.out.printf("\t%d -- > %d  W: %f\n", cg.getFromNode(), cg.getToNode(), cg.getWeight());
+        System.out.println("\n\t----Outta me----");
+        for (ConnectionGene cg : this.outputConnections) {
+            System.out.printf("\t%d -- > %d  W: %f\n", cg.getFromNodeNum(), cg.getToNodeNum(), cg.getWeight());
         }
 
         //Output Info
         System.out.print("Output: ");
-        System.out.println(this.output);
+        System.out.println(this.outputValue);
         System.out.println("\n**********\n");
+    }
+
+    /**
+     * <p>toString method for NodeGene</p>
+     */
+    @Override
+    public String toString() {
+        return String.format("Node.Number: %d  |  Node.Layer: %d", this.number, this.layer);
     }
 
     // ***********************************************************************************
     // GETTER AND SETTERS
-    public int getType() {
-        return type;
-    }
-    public void setType(int type) {
-        this.type = type;
-    }
-
-    public void setInputs(ArrayList<Double> inputs) {
-        this.inputs = inputs;
-    }
-    public ArrayList<Double> getInputs() {
-        return inputs;
-    }
-
-    public double getInput() {
-        return input;
-    }
-    public void setInput(Double input) {
-        this.input = input;
-    }
-
     public void setNumber(int number) {
         this.number = number;
     }
+
     public int getNumber() {
         return number;
     }
 
-    public void setOutput(Double output) {
-        this.output = output;
-    }
-    public double getOutput() {
-        return output;
+    public double getInputSum() {
+        return inputSum;
     }
 
-    public ArrayList<ConnectionGene> getConnectionsTo() {
-        return connectionsTo;
+    public void setInputSum(double inputSum) {
+        this.inputSum = inputSum;
     }
-    public ArrayList<ConnectionGene> getConnectionsFrom() {
-        return connectionsFrom;
+
+    public double getOutputValue() {
+        return outputValue;
     }
+
+    public void setOutputValue(double outputValue) {
+        this.outputValue = outputValue;
+    }
+
+    public int getLayer() {
+        return layer;
+    }
+
+    public void setLayer(int layer) {
+        this.layer = layer;
+    }
+
+    public ArrayList<ConnectionGene> getOutputConnections() {
+        return outputConnections;
+    }
+
+    public void setOutputConnections(ArrayList<ConnectionGene> outputConnections) {
+        this.outputConnections = outputConnections;
+    }
+
+    public ArrayList<ConnectionGene> getInputConnections() {
+        return inputConnections;
+    }
+
+    public void setInputConnections(ArrayList<ConnectionGene> inputConnections) {
+        this.inputConnections = inputConnections;
+    }
+
+}
 
 
 
     // TODO Make SENSIBLE toString method
-}
+

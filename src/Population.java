@@ -24,7 +24,7 @@ public class Population {
     public static final double C3_WEIGHT_SIGNIFICANCE = 0.4;
 
     // MUTATION RATES
-    public static final double MUTATION_RATE = 0.1;
+    public static final double MUTATION_RATE = 0.5;
     public static final double CONNECTION_WEIGHT_MUTATION_RATE = 0.8;
     public static final double UNIFORM_PERTURBATION_RATE = 0.10;
     public static final double DISABLED_IS_INHERITED_RATE = 0.75;
@@ -56,7 +56,7 @@ public class Population {
      */
     public void initializePopulation() {
         for(int i = 0; i < Population.POP_SIZE; i++) {
-            this.members.add(new Genome());
+            this.members.add(new Genome(2, 1));
         }
     }
 
