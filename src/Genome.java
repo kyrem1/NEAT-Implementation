@@ -158,7 +158,7 @@ public class Genome {
             network.get(i).engage();
         }
 
-        //the outputs are nodes[this.numInputs] to nodes [this.numInputs + this.numOutputs-1]
+        //the outputs are nodes[this.numInputs] to nodes[this.numInputs + this.numOutputs-1]
         double[] outs = new double[this.numOutputs];
         for (int i = 0; i < this.numOutputs; i++) {
             outs[i] = nodes.get(this.numInputs + i).getOutputValue();

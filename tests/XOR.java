@@ -8,7 +8,7 @@
  *
  */
 
-public class XOR {
+public class XOR implements Environment {
     private static final int inputNumber = 2;
     private final int outputNumber = 1;
 
@@ -16,4 +16,8 @@ public class XOR {
         System.out.println(Population.POP_SIZE);
     }
 
+    @Override
+    public double fitness(Genome g) {
+        return 0;
+    }
 }
