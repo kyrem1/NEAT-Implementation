@@ -44,7 +44,12 @@ public class NodeGene {
         this.inputConnections = new ArrayList<>();
     }
 
-    // Initializes the input and output connection lists.
+    //******************************************************************************************************
+    //Main Connection Methods
+
+    /**
+     * <p>Initializes the input and output connection lists.</p>
+     */
     public void findConnections(ArrayList<ConnectionGene> connections) {
         this.outputConnections.clear();
         this.inputConnections.clear();
@@ -76,12 +81,11 @@ public class NodeGene {
                 double feed = cg.getWeight() * this.outputValue;
                 cg.getToNode().addInput(feed);
             }
-
         }
 
     }
 
-    // ***********************************************************************************
+    //******************************************************************************************************
     // Information Printing
 
     /**
@@ -136,7 +140,7 @@ public class NodeGene {
         return String.format("Node.Number: %d  |  Node.Layer: %d", this.number, this.layer);
     }
 
-    // ***********************************************************************************
+    //******************************************************************************************************
     // GETTER AND SETTERS
     public void setNumber(int number) {
         this.number = number;

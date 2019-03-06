@@ -16,7 +16,6 @@ public class Population {
     public static final int INPUT_SIZE = 2;
     public static final int OUTPUT_SIZE = 1;
 
-
     // SPECIATION PARAMETERS
     public static final double COMPATIBILITY_THRESHOLD = 3.0;
     public static final double C1_EXCESS_SIGNIFICANCE = 1.0;
@@ -24,7 +23,7 @@ public class Population {
     public static final double C3_WEIGHT_SIGNIFICANCE = 0.4;
 
     // MUTATION RATES
-    public static final double MUTATION_RATE = 0.5;
+    public static final double MUTATION_RATE = 0.05;
     public static final double CONNECTION_WEIGHT_MUTATION_RATE = 0.8;
     public static final double UNIFORM_PERTURBATION_RATE = 0.10;
     public static final double DISABLED_IS_INHERITED_RATE = 0.75;
@@ -33,13 +32,11 @@ public class Population {
     public static final double NEW_LINK_MUTATION_RATE = 0.04; // TODO MAKE SMALL POP AND LARGE POP RATE
 
 
-
     // TODO
     //  - Implement Distance Algorithm
     //  - Implement Interfacing
     //
-    //*********************************************************
-
+    //******************************************************************************************************
 
     /**
      * <p>Constructor for Population of Genomes</p>

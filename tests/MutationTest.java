@@ -24,8 +24,30 @@ class MutationTest {
         }
     }
 
+    private static void mutationAddConnectionTest() {
+        Genome g = new Genome(2,1);
+
+        double[] ins = {1.0, 0.0};
+
+        g.setupNetwork();
+        g.printConnections();
+        for(int i = 0; i < 5; i++) {
+            System.out.print("\n---------------------------------------\n");
+            g.mutateAddNode();
+            g.mutateAddConnection();
+            g.printConnections();
+        }
+
+        double[] outs = g.feedForward(ins);
+        for(double d : outs) {
+            System.out.println(d);
+        }
+    }
+
     public static void main(String[] args) {
-        mutationAddNodeTest();
+//        splitConnectionTest();
+//        mutationAddNodeTest();
+        mutationAddConnectionTest();
     }
 
 }

@@ -13,6 +13,8 @@ import java.util.Comparator;
  */
 public class Genome {
 
+    private double fitness; // Fitness Score
+
     private ArrayList<ConnectionGene> connections = new ArrayList<>();  // List of all connections
     private ArrayList<NodeGene> nodes = new ArrayList<>();  // List of nodes
     private ArrayList<NodeGene> network = new ArrayList<>();    // List of nodes st. in activation order
@@ -63,6 +65,22 @@ public class Genome {
         updateNetwork();
     }
 
+    /**
+     * <p>Utility for mutation methods</p>
+     * @param startNo Beginning Node Number to test
+     * @param endNo End Node Number to test
+     * @return exists of connection | True if connection exists, else false
+     */
+    public boolean connectionExists(int startNo, int endNo) {
+        boolean exists = false; // Assume False, unless proven otherwise
+        for(ConnectionGene cg : this.connections) { // Iterate over connections
+            if(cg.getFromNodeNum() == startNo && cg.getToNodeNum() == endNo) {
+                exists = true;
+            }
+        }
+        return exists;
+    }
+
     //*****************************************************************************************************************
     // GENOME INFO
 
@@ -96,7 +114,7 @@ public class Genome {
     // GENOME MAIN METHODS
 
     /**
-     * <p>Call upon creation of genome</p>
+     * <p>Call after creation of genome</p>
      */
     public void setupNetwork() {
         Random rng = new Random();
@@ -120,7 +138,7 @@ public class Genome {
     }
 
     /**
-     * <p>Call upon any updating of genomic information.</p>
+     * <p>Call after any updating of genomic information.</p>
      */
     public void updateNetwork() {
         this.network.clear();
@@ -154,8 +172,8 @@ public class Genome {
         }
         nodes.get(biasNode).setOutputValue(1); //output of bias is 1
 
-        for (int i = 0; i < network.size(); i++) {   //for each node in the network engage it(see node class for what this does)
-            network.get(i).engage();
+        for (NodeGene node : this.network) {   //for each node in the network engage it(see node class for what this does)
+            node.engage();
         }
 
         //the outputs are nodes[this.numInputs] to nodes[this.numInputs + this.numOutputs-1]
@@ -172,8 +190,7 @@ public class Genome {
     }
 
     //****************************************************************************************************************************************
-    // GENOME MUTATION METHODS
-    // TODO Implement Mutation Methods
+    // GENOME MUTATION METHODS // TODO Implement More Mutation Methods
 
     // I think it works....
     public void mutateAddNode() {
@@ -190,11 +207,23 @@ public class Genome {
         }
     }
 
-    // TODO ImplementMe
+    // I think it works....
     public void mutateAddConnection() {
+        Random rng = new Random();
+        if(Util.weightedDecision(0.9)) {
+            int random1 = rng.nextInt(this.nodes.size());
+            int random2 = rng.nextInt(this.nodes.size());
+            while(random1 >= random2) {
+                 random2 = rng.nextInt(this.nodes.size());
+            }
+
+            if(!connectionExists(random1, random2)) { // Mutate if there is no connection between the two.
+                addConnection(random1, random2, rng.nextDouble(), true);
+                this.updateNetwork();
+            }
+        }
 
     }
-
 
     //******************************************************************************************
     //GETTER AND SETTER

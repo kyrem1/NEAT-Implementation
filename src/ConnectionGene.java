@@ -36,7 +36,7 @@ public class ConnectionGene {
     }
 
     //******************************************************************************************************
-    //Main Connection Methods
+    //MAIN Connection Methods
 
     public void findNodes(ArrayList<NodeGene> nodes) {
         for(NodeGene node : nodes) {
@@ -79,6 +79,8 @@ public class ConnectionGene {
     }
 
     //******************************************************************************************************
+    // GETTER AND SETTER
+
     public double getWeight() {
         return weight;
     }
